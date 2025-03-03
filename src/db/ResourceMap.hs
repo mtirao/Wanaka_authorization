@@ -7,13 +7,7 @@
 {-# language StandaloneDeriving #-}
 {-# language TypeFamilies #-}
 
-module ResourceMap (findResourceMap, 
-    toResourceMapDTO, 
-    insertResourceMap, 
-    deleteResourceMap, 
-    updateResourceMap, 
-    getResUserId,
-    getResGroupId ) where
+module ResourceMap  where
 
 import Control.Monad.IO.Class
 import Data.Int (Int32, Int64)

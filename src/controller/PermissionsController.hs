@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module PermissionsController(getPermissions, createPermissions, deletePermissions) where
+module PermissionsController(getPermissions, createPermissions, deletePermissions, validateAuthorization) where
 
 import UserPermissionsDTO
 import ErrorMessage
@@ -47,4 +47,15 @@ deletePermissions userId conn =  do
                                                     jsonResponse (ErrorMessage "User not found")
                                                     status forbidden403
                                             Right [a] -> status noContent204
- 
+
+validateAuthorization body conn =  do
+                        b <- body 
+                        case decode b :: Maybe UserAuthorizationRequestDTO of
+                            Nothing -> status badRequest400
+                            Just a -> do                   
+                                result <- liftIO $ findUserAuthorization a.authResource a.authUserId conn
+                                case result of
+                                    Right [] -> do
+                                            jsonResponse (ErrorMessage "User not found")
+                                            status forbidden403
+                                    Right [a] -> jsonResponse (toUserAuthorizationDTO a)

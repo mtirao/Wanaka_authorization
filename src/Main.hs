@@ -57,7 +57,7 @@ main = do
             result <- S.acquire connSettings
             case result of
                 Left err -> putStrLn $ "Error acquiring connection: " ++ show err
-                Right pool -> scotty 3002 $ do
+                Right pool -> scotty 3004 $ do
                     middleware logStdoutDev
                     -- GROUP
                     post "/api/wanaka/group" $ createGroup body pool
@@ -76,6 +76,7 @@ main = do
                     delete "/api/wanaka/permission/" $ do
                                                 idd <- param "resource" :: ActionM TL.Text
                                                 deletePermissions (TI.pack (TL.unpack idd)) pool
+                    post "/api/wanaka/authorize" $ validateAuthorization body pool
 
                     -- RESOURCE MAP
                     post "/api/wanaka/map" $ createMap body pool

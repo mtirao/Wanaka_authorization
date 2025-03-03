@@ -10,7 +10,31 @@ import Data.Text
 import Data.Aeson
 import Control.Lens.Internal.CTypes (Int64)
 
--- Tenant
+-- User Permissions DTO
+data UserAuthorizationDTO = UserAuthorizationDTO
+    { authUserExec :: Int64
+    , authUserRead :: Int64
+    , authUserWrite :: Int64
+    } deriving (Show)
+
+instance ToJSON UserAuthorizationDTO where
+    toJSON UserAuthorizationDTO {..} = object [
+            "userexec" .= authUserExec,
+            "userread" .= authUserRead,
+            "userwrite" .= authUserWrite
+        ]
+
+data UserAuthorizationRequestDTO = UserAuthorizationRequestDTO
+    { authUserId :: Text
+    , authResource :: Text
+    } deriving (Show)
+
+instance FromJSON UserAuthorizationRequestDTO where
+    parseJSON (Object v) = UserAuthorizationRequestDTO <$>
+        v .: "userid" <*>
+        v .: "resource"
+        
+-- User Permissions DTO
 data UserPermissionsDTO = UserPermissionsDTO
     { permGroupExec :: Int64
     , permGroupRead :: Int64

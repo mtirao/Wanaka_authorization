@@ -7,11 +7,11 @@
 {-# language StandaloneDeriving #-}
 {-# language TypeFamilies #-}
 
-module UserPermissions (findUserPermission, toUserPermissionsDTO, insertUserPermission, deleteUserPermission, updateUserPermission) where
+module UserPermissions (findUserPermission, toUserPermissionsDTO, insertUserPermission, deleteUserPermission, updateUserPermission, findUserAuthorization, toUserAuthorizationDTO) where
 
 import Control.Monad.IO.Class
 import Data.Int (Int32, Int64)
-import Data.Text (Text, unpack, pack)
+import Data.Text (Text, unpack, pack, find)
 import qualified Data.Text.Lazy as TL
 --import qualified Data.Text.Internal as TI
 import Data.Time (LocalTime)
@@ -23,6 +23,7 @@ import Rel8
 import Prelude hiding (filter, null)
 
 import UserPermissionsDTO
+import qualified ResourceMap as R
 
 -- Rel8 Schemma Definitions
 data UserPermission f = UserPermission
@@ -38,8 +39,14 @@ data UserPermission f = UserPermission
     , permUserWrite :: Column f Int64
     }
     deriving (Generic, Rel8able)
-
 deriving stock instance f ~ Rel8.Result => Show (UserPermission f)
+
+data UserAuthorization f = UserAuthorization
+    { permUserExec :: Column f Int64
+    , permUserRead :: Column f Int64
+    , permUserWrite :: Column f Int64
+    }
+    deriving (Generic, Rel8able)
 
 userPermissionSchema :: TableSchema (UserPermission Name)
 userPermissionSchema = TableSchema
@@ -67,6 +74,17 @@ findUserPermission resource conn = do
                                             p <- each userPermissionSchema
                                             where_  (p.permResource ==. lit resource)
                                             return p
+                            run (statement () query ) conn
+
+findUserAuthorization :: Text -> Text -> Connection -> IO (Either QueryError [UserAuthorization Result])
+findUserAuthorization resource userId conn = do
+                            let query = select $ do
+                                            p <- each userPermissionSchema
+                                            u <- each R.resourceMapSchema
+                                            where_  (p.permResource ==. u.resMapResource)
+                                            where_  (u.resMapUserId ==. lit userId)
+                                            where_  (p.permResource ==. lit resource)
+                                            return $ UserAuthorization p.permUserExec p.permUserRead p.permUserWrite
                             run (statement () query ) conn
 
 -- INSERT
@@ -113,4 +131,5 @@ update1 r p  = update $ Update
 toUserPermissionsDTO :: UserPermission Result -> UserPermissionsDTO
 toUserPermissionsDTO p = UserPermissionsDTO p.permGroupExec p.permGroupRead p.permGroupWrite p.permOtherExec p.permOtherRead p.permOtherWrite p.permResource p.permUserExec p.permUserRead p.permUserWrite
 
-
+toUserAuthorizationDTO :: UserAuthorization Result -> UserAuthorizationDTO
+toUserAuthorizationDTO p = UserAuthorizationDTO p.permUserExec p.permUserRead p.permUserWrite
