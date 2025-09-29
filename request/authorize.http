@@ -3,5 +3,5 @@ content-type: application/json
 
 {
     "userid" : "92525840",
-    "resource" : "/api/wanaka/permission"
+    "resource" : "/api/wanaka/profile"
 }
